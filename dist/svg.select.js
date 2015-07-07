@@ -1,4 +1,4 @@
-/*! svg.select.js - v1.0.5 - 2015-06-26
+/*! svg.select.js - v1.0.5 - 2015-07-07
 * https://github.com/Fuzzyma/svg.select.js
 * Copyright (c) 2015 Ulrich-Matthias Schäfer; Licensed MIT */
 /*jshint -W083*/
@@ -16,7 +16,10 @@
 
     SelectHandler.prototype.init = function (value, options) {
 
-        var bbox = this.el.bbox();
+        var box = this.el.bbox();
+        if(this.el instanceof SVG.Nested) {
+            box = this.el.rbox();
+        }
         this.options = {};
 
         // Merging the defaults and the options-object together
@@ -27,7 +30,7 @@
             }
         }
 
-        this.nested = (this.nested || this.parent.nested()).size(bbox.width || 1, bbox.height || 1).transform(this.el.ctm()).move(bbox.x, bbox.y);
+        this.nested = (this.nested || this.parent.nested()).size(box.width || 1, box.height || 1).transform(this.el.ctm()).move(box.x, box.y);
 
         // When deepSelect is enabled and the element is a line/polyline/polygon, draw only points for moving
         if (this.options.deepSelect && ['line', 'polyline', 'polygon'].indexOf(this.el.type) !== -1) {
@@ -61,10 +64,13 @@
 
     // create the point-array which contains the 2 points of a line or simply the points-array of polyline/polygon
     SelectHandler.prototype.getPointArray = function () {
-        var bbox = this.el.bbox();
+        var box = this.el.bbox();
+        if(this.el instanceof SVG.Nested) {
+            box = this.el.rbox();
+        }
 
         return this.el.array().valueOf().map(function (el) {
-            return [el[0] - bbox.x, el[1] - bbox.y];
+            return [el[0] - box.x, el[1] - box.y];
         });
     };
 
@@ -111,33 +117,39 @@
     };
 
     SelectHandler.prototype.updateRectSelection = function () {
-        var bbox = this.el.bbox();
+        var box = this.el.bbox();
+        if(this.el instanceof SVG.Nested) {
+            box = this.el.rbox();
+        }
 
         this.rectSelection.set.get(0).attr({
-            width: bbox.width,
-            height: bbox.height
+            width: box.width,
+            height: box.height
         });
 
         // set.get(1) is always in the upper left corner. no need to move it
         if (this.options.points) {
-            this.rectSelection.set.get(2).center(bbox.width, 0);
-            this.rectSelection.set.get(3).center(bbox.width, bbox.height);
-            this.rectSelection.set.get(4).center(0, bbox.height);
+            this.rectSelection.set.get(2).center(box.width, 0);
+            this.rectSelection.set.get(3).center(box.width, box.height);
+            this.rectSelection.set.get(4).center(0, box.height);
 
-            this.rectSelection.set.get(5).center(bbox.width / 2, 0);
-            this.rectSelection.set.get(6).center(bbox.width, bbox.height / 2);
-            this.rectSelection.set.get(7).center(bbox.width / 2, bbox.height);
-            this.rectSelection.set.get(8).center(0, bbox.height / 2);
+            this.rectSelection.set.get(5).center(box.width / 2, 0);
+            this.rectSelection.set.get(6).center(box.width, box.height / 2);
+            this.rectSelection.set.get(7).center(box.width / 2, box.height);
+            this.rectSelection.set.get(8).center(0, box.height / 2);
         }
 
         if (this.options.rotationPoint) {
-            this.rectSelection.set.get(9).center(bbox.width / 2, 20);
+            this.rectSelection.set.get(9).center(box.width / 2, 20);
         }
     };
 
     SelectHandler.prototype.selectRect = function (value) {
 
-        var _this = this, bbox = this.el.bbox();
+        var _this = this, box = this.el.bbox();
+        if(this.el instanceof SVG.Nested) {
+            box = this.el.rbox();
+        }
 
         this.rectSelection.isSelected = value;
 
@@ -155,20 +167,20 @@
 
         // create the selection-rectangle and add the css-class
         if (!this.rectSelection.set.get(0)) {
-            this.rectSelection.set.add(this.nested.rect(bbox.width, bbox.height).addClass(this.options.classRect));
+            this.rectSelection.set.add(this.nested.rect(box.width, box.height).addClass(this.options.classRect));
         }
 
         // Draw Points at the edges, if enabled
         if (this.options.points && !this.rectSelection.set.get(1)) {
             this.rectSelection.set.add(this.nested.circle(this.options.radius).center(0, 0).attr('class', this.options.classPoints + '_lt').mousedown(getMoseDownFunc('lt')));
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(bbox.width, 0).attr('class', this.options.classPoints + '_rt').mousedown(getMoseDownFunc('rt')));
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(bbox.width, bbox.height).attr('class', this.options.classPoints + '_rb').mousedown(getMoseDownFunc('rb')));
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(0, bbox.height).attr('class', this.options.classPoints + '_lb').mousedown(getMoseDownFunc('lb')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(box.width, 0).attr('class', this.options.classPoints + '_rt').mousedown(getMoseDownFunc('rt')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(box.width, box.height).attr('class', this.options.classPoints + '_rb').mousedown(getMoseDownFunc('rb')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(0, box.height).attr('class', this.options.classPoints + '_lb').mousedown(getMoseDownFunc('lb')));
 
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(bbox.width / 2, 0).attr('class', this.options.classPoints + '_t').mousedown(getMoseDownFunc('t')));
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(bbox.width, bbox.height / 2).attr('class', this.options.classPoints + '_r').mousedown(getMoseDownFunc('r')));
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(bbox.width / 2, bbox.height).attr('class', this.options.classPoints + '_b').mousedown(getMoseDownFunc('b')));
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(0, bbox.height / 2).attr('class', this.options.classPoints + '_l').mousedown(getMoseDownFunc('l')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(box.width / 2, 0).attr('class', this.options.classPoints + '_t').mousedown(getMoseDownFunc('t')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(box.width, box.height / 2).attr('class', this.options.classPoints + '_r').mousedown(getMoseDownFunc('r')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(box.width / 2, box.height).attr('class', this.options.classPoints + '_b').mousedown(getMoseDownFunc('b')));
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(0, box.height / 2).attr('class', this.options.classPoints + '_l').mousedown(getMoseDownFunc('l')));
 
             this.rectSelection.set.each(function () {
                 this.addClass(_this.options.classPoints);
@@ -178,7 +190,7 @@
         // draw rotationPint, if enabled
         if (this.options.rotationPoint && !this.rectSelection.set.get(9)) {
 
-            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(bbox.width / 2, 20).attr('class', this.options.classPoints + '_rot')
+            this.rectSelection.set.add(this.nested.circle(this.options.radius).center(box.width / 2, 20).attr('class', this.options.classPoints + '_rot')
                 .mousedown(function (ev) {
                     ev = ev || window.event;
                     ev.preventDefault ? ev.preventDefault() : ev.returnValue = false;
@@ -191,8 +203,11 @@
 
     SelectHandler.prototype.handler = function () {
 
-        var bbox = this.el.bbox();
-        this.nested.size(bbox.width || 1, bbox.height || 1).transform(this.el.ctm()).move(bbox.x, bbox.y);
+        var box = this.el.bbox();
+        if(this.el instanceof SVG.Nested) {
+            box = this.el.rbox();
+        }
+        this.nested.size(box.width || 1, box.height || 1).transform(this.el.ctm()).move(box.x, box.y);
 
         if (this.rectSelection.isSelected) {
             this.updateRectSelection();
@@ -279,7 +294,7 @@
     };
 
 
-    SVG.extend(SVG.Element, {
+    SVG.extend(SVG.Element, SVG.Nested, {
         // Select element with mouse
         select: function (value, options) {
 
@@ -298,7 +313,7 @@
         }
     });
 
-    SVG.Element.prototype.select.defaults = {
+    SVG.Element.prototype.select.defaults = SVG.Nested.prototype.select.defaults = {
         points: true,                            // If true, points at the edges are drawn. Needed for resize!
         classRect: 'svg_select_boundingRect',    // Css-class added to the rect
         classPoints: 'svg_select_points',        // Css-class added to the points
