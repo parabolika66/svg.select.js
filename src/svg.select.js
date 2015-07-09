@@ -220,7 +220,9 @@
     SelectHandler.prototype.observe = function () {
         var _this = this;
 
-        if (MutationObserver) {
+        window.MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
+
+        if (window.MutationObserver) {
             if (this.rectSelection.isSelected || this.pointSelection.isSelected) {
                 this.observerInst = this.observerInst || new MutationObserver(function () {
                     _this.handler();
