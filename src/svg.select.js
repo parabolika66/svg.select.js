@@ -14,10 +14,7 @@
 
     SelectHandler.prototype.init = function (value, options) {
 
-        var box = this.el.bbox();
-        if(this.el instanceof SVG.Nested) {
-            box = this.el.rbox();
-        }
+        var box = this.getBox();
         this.options = {};
 
         // Merging the defaults and the options-object together
@@ -42,6 +39,22 @@
 
     };
 
+    SelectHandler.prototype.getBox = function() {
+        var box = this.el.bbox();
+
+        if(this.el instanceof SVG.Nested) {
+            box = this.el.tbox();
+
+            if (!(box.x && box.y)) {
+                box.x = this.el.x();
+                box.y = this.el.y();
+                box.width = this.el.width();
+                box.height = this.el.height();
+            }
+        }
+        return box;
+    };
+
     SelectHandler.prototype.selectPoints = function (value) {
 
         this.pointSelection.isSelected = value;
@@ -62,10 +75,7 @@
 
     // create the point-array which contains the 2 points of a line or simply the points-array of polyline/polygon
     SelectHandler.prototype.getPointArray = function () {
-        var box = this.el.bbox();
-        if(this.el instanceof SVG.Nested) {
-            box = this.el.rbox();
-        }
+        var box = this.getBox();
 
         return this.el.array().valueOf().map(function (el) {
             return [el[0] - box.x, el[1] - box.y];
@@ -89,14 +99,14 @@
                     .addClass(this.options.classPoints)
                     .addClass(this.options.classPoints + '_point')
                     .mousedown(
-                        (function (k) {
-                            return function (ev) {
-                                ev = ev || window.event;
-                                ev.preventDefault ? ev.preventDefault() : ev.returnValue = false;
-                                _this.el.fire('point', {x: ev.pageX, y: ev.pageY, i: k, event: ev});
-                            };
-                        })(i)
-                    )
+                    (function (k) {
+                        return function (ev) {
+                            ev = ev || window.event;
+                            ev.preventDefault ? ev.preventDefault() : ev.returnValue = false;
+                            _this.el.fire('point', {x: ev.pageX, y: ev.pageY, i: k, event: ev});
+                        };
+                    })(i)
+                )
             );
         }
 
@@ -115,10 +125,7 @@
     };
 
     SelectHandler.prototype.updateRectSelection = function () {
-        var box = this.el.bbox();
-        if(this.el instanceof SVG.Nested) {
-            box = this.el.rbox();
-        }
+        var box = this.getBox();
 
         this.rectSelection.set.get(0).attr({
             width: box.width,
@@ -144,10 +151,7 @@
 
     SelectHandler.prototype.selectRect = function (value) {
 
-        var _this = this, box = this.el.bbox();
-        if(this.el instanceof SVG.Nested) {
-            box = this.el.rbox();
-        }
+        var _this = this, box = this.getBox();
 
         this.rectSelection.isSelected = value;
 
@@ -201,10 +205,8 @@
 
     SelectHandler.prototype.handler = function () {
 
-        var box = this.el.bbox();
-        if(this.el instanceof SVG.Nested) {
-            box = this.el.rbox();
-        }
+        var box = this.getBox();
+
         this.nested.size(box.width || 1, box.height || 1).transform(this.el.ctm()).move(box.x, box.y);
 
         if (this.rectSelection.isSelected) {
@@ -222,7 +224,7 @@
 
         window.MutationObserver = window.MutationObserver || window.WebKitMutationObserver || window.MozMutationObserver;
 
-        if (window.MutationObserver) {
+        if (window.MutationObserver || MutationObserver !== undefined) {
             if (this.rectSelection.isSelected || this.pointSelection.isSelected) {
                 this.observerInst = this.observerInst || new MutationObserver(function () {
                     _this.handler();
